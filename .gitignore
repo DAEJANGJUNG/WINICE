@@ -1,3 +1,4 @@
 src/WINICE/.vs/
 src/WINICE/bin
 src/WINICE/obj
+**/gpt_config.json
