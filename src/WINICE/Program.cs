@@ -1,11 +1,9 @@
-﻿using GPT;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OpenAI;
 using OpenAI.Managers;
 using OpenAI.ObjectModels;
 using OpenAI.ObjectModels.RequestModels;
-using OpenAI.ObjectModels.ResponseModels;
 
 enum Product
 {
@@ -17,23 +15,11 @@ enum Product
     TEST = 5
 }
 
-namespace GPT
+namespace WINICE
 {
-    internal class ChatGptAPI
+
+    internal static class Program
     {
-        internal static string key;
-        // API 설정
-        OpenAIService openAiService = new OpenAIService(new OpenAiOptions()
-        {
-            ApiKey = ReadKeyFromConfig()
-        });
-
-        // ChatGPT 설정 변수
-        ChatCompletionCreateRequest chatRequest;
-
-        // Temperature 설정
-        private static double AiTemperatureValue;
-
         private static string ReadKeyFromConfig()
         {
             try
@@ -59,124 +45,48 @@ namespace GPT
             // 예외가 발생하거나 파일을 찾을 수 없는 경우 null 반환
             return null;
         }
-
-        // 정적 생성자 Temperature 설정 초기화
-        static ChatGptAPI()
+        private static async Task Generate_path()
         {
-            AiTemperatureValue = 0.4;
+            string path = Console.ReadLine();
+            await RequestGPT(path);
+
         }
 
-        // ChatGPT 대화의 다양성 설정
-        public void SetTemperature(double temperature)
+        private static async Task Init(Product item)
         {
-            AiTemperatureValue = temperature;
-            ChatGptSetting();
-        }
-
-        // ChatGPT Temperature 설정값 넘겨주기
-        public double GetTemperature()
-        {
-            return AiTemperatureValue;
-        }
-
-        // 새 대화 생성
-        public void ChatGptSetting()
-        {
-            // ChatGPT 초기 설정
-            chatRequest = new ChatCompletionCreateRequest
+            switch (item)
             {
-                Model = Models.Gpt_3_5_Turbo,
-                Temperature = (float?)AiTemperatureValue,
-                Messages = new List<ChatMessage> { }
-            };
-        }
-        // 질문하기
-        public async Task<string> AskQuestion(string prompt)
-        {
-            // 요청 리퀘스트에 질문 메시지 추가
-            ChatMessage chatUserMessage = new ChatMessage("user", prompt);
-            chatRequest.Messages.Add(chatUserMessage);
-
-            // 봇 답변 받기
-            ChatCompletionCreateResponse chatResult = await openAiService.ChatCompletion.CreateCompletion(chatRequest);
-
-            // 봇 응답이 성공적이면
-            if (chatResult.Successful)
-            {
-                // 봇 답변 내용 저장
-                string response = chatResult.Choices.First().Message.Content;
-
-                // 요청 리퀘스트에 답변 메시지 추가, 대화 유지를 위함
-                ChatMessage chatBotMessage = new ChatMessage("assistant", response);
-                chatRequest.Messages.Add(chatBotMessage);
-                return response;
+                case Product.OUTLOOK:
+                    // TODO : Add Parsing or Conversion API in Outlook
+                    Console.WriteLine("Selected product : outlook");
+                    break;
+                case Product.WORD:
+                    // TODO : Add Parsing or Conversion API in Word
+                    Console.WriteLine("Selected product : word");
+                    break;
+                case Product.EXCEL:
+                    // TODO : Add Parsing or Conversion API in Excel
+                    Console.WriteLine("Selected product : excel");
+                    break;
+                case Product.PPT:
+                    // TODO : Add Parsing or Conversion API in Powerpoint
+                    Console.WriteLine("Selected product : powerpoint");
+                    break;
+                case Product.TEST:
+                    break;
+                default:
+                    Console.WriteLine("Exit Program. Good Bye~");
+                    break;
             }
-            // 봇 응답이 실패하면
-            else
+            //string input_path = Get_path();
+            await Generate_path();
+        }
+        public static Product Menu()
+        {
+            Product selectedItem;
+            do
             {
-                if (chatResult.Error == null)
-                {
-                    throw new Exception("Unknown Error");
-                }
-                return $"Error : {chatResult.Error.Code}: {chatResult.Error.Message}";
-            }
-        }
-    }
-}
-class Program
-{
-    private static string Get_path()
-    {
-        Console.Write("Please input target path : ");
-        string target_path = Console.ReadLine();
-        
-        return target_path;
-    }
-
-    private static async Task Generate_path()
-    {
-        ChatGptAPI gpt = new ChatGptAPI();
-        string path = Console.ReadLine();
-        string result = await gpt.AskQuestion(path);
-        Console.WriteLine(result);
-
-    }
-
-    private static void Init(Product item)
-    {
-        switch (item)
-        {
-            case Product.OUTLOOK:
-                // TODO : Add Parsing or Conversion API in Outlook
-                Console.WriteLine("Selected product : outlook");
-                break;
-            case Product.WORD:
-                // TODO : Add Parsing or Conversion API in Word
-                Console.WriteLine("Selected product : word");
-                break;
-            case Product.EXCEL:
-                // TODO : Add Parsing or Conversion API in Excel
-                Console.WriteLine("Selected product : excel");
-                break;
-            case Product.PPT:
-                // TODO : Add Parsing or Conversion API in Powerpoint
-                Console.WriteLine("Selected product : powerpoint");
-                break;
-            case Product.TEST:
-                break;
-            default:
-                Console.WriteLine("Exit Program. Good Bye~");
-                break;
-        }
-        string input_path = Get_path();
-        Generate_path();
-    }
-    public static Product Menu()
-    {
-        Product selectedItem;
-        do
-        {
-            Console.WriteLine(@"
+                Console.WriteLine(@"
           ___                       ___                       ___           ___     
          /\  \                     /\  \                     /\__\         /\__\    
         _\:\  \       ___          \:\  \       ___         /:/  /        /:/ _/_   
@@ -190,9 +100,9 @@ class Program
          \/__/         \/__/       \/__/         \/__/       \/__/         \/__/    
       ");
 
-            Console.WriteLine("Please Select The Object to Analysis");
-            Console.WriteLine("== Object List ==");
-            Console.WriteLine(@"
+                Console.WriteLine("Please Select The Object to Analysis");
+                Console.WriteLine("== Object List ==");
+                Console.WriteLine(@"
       [0] Exit
       [1] Outlook
       [2] Word
@@ -200,25 +110,62 @@ class Program
       [4] Power Point
       ");
 
-            Console.Write("Select item : ");
-            if (int.TryParse(Console.ReadLine(), out int item))
+                Console.Write("Select item : ");
+                if (int.TryParse(Console.ReadLine(), out int item))
+                {
+                    selectedItem = (Product)item;
+                }
+                else
+                {
+                    Console.WriteLine("Invalid input");
+                    selectedItem = Product.EXIT;
+                }
+            } while (selectedItem < Product.EXIT || selectedItem > Product.PPT);
+
+            return selectedItem;
+        }
+
+        public static async Task Main(string[] args)
+        {
+            Product selectedItem = Menu();
+            await Init(selectedItem);
+        }
+
+        public static async Task RequestGPT(string request)
+        {
+            var gpt3 = new OpenAIService(new OpenAiOptions()
             {
-                selectedItem = (Product)item;
+                ApiKey = ReadKeyFromConfig()
+            });
+
+            var completionResult = await gpt3.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest()
+            {
+                Messages = new List<ChatMessage>
+                {
+                    ChatMessage.FromUser(request+"와 같은 의미를 가지는 windows OS 경로를 10개 생성해줘"),
+                },
+
+                Model = Models.Gpt_3_5_Turbo,
+                MaxTokens = 1000//optional
+            });
+
+            if (completionResult.Successful)
+            {
+                foreach (var choice in completionResult.Choices)
+                {
+                    Console.WriteLine("\n" + choice.Message.Content);
+                }
+                Console.WriteLine();
             }
             else
             {
-                Console.WriteLine("Invalid input");
-                selectedItem = Product.EXIT;
+                if (completionResult.Error == null)
+                {
+                    throw new Exception("Unknown Error");
+                }
+                Console.WriteLine($"{completionResult.Error.Code}: {completionResult.Error.Message}");
             }
-        } while (selectedItem < Product.EXIT || selectedItem > Product.PPT);
-
-        return selectedItem;
-    }
-    public static void Main(string[] args)
-    {
-        Product selectedItem = Menu();
-        Init(selectedItem);
+        }
 
     }
-
 }
